@@ -163,7 +163,7 @@ def _find_vm_fd(
     if target == "anon_inode:kvm-vm":
         vm_fds.append(pid_fd.get_fd(fd_num))
         return
-    match = re.match(target, r"anon_inode:kvm-vcpu:(\d+)")
+    match = re.match(r"anon_inode:kvm-vcpu:(\d+)", target)
     if match:
         idx = int(match.group(1))
         if vcpu_fds.get(idx) is not None:
@@ -189,5 +189,9 @@ def find_vm(pid: int) -> Optional[Guest]:
             fd.close()
         raise GuestError(
             "Found multiple vms in process {pid}." + " This is not supported yet."
+        )
+    if len(vcpu_fds) == 0:
+        raise GuestError(
+            "Found KVM instance with no vcpu in process {pid}."
         )
     return Guest(vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()))

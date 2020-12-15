@@ -22,12 +22,11 @@ def main() -> None:
     except ValueError as e:
         die(f"Pid is not a number: {e}")
     try:
-        fd = find_vm(pid)
+        vm = find_vm(pid)
     except GuestError as err:
         die(f"Cannot access VM: {err}")
-    if fd is None:
+    if vm is None:
         die(f"No kvm instance found for pid {pid}")
-    breakpoint()
 
 
 if __name__ == "__main__":
