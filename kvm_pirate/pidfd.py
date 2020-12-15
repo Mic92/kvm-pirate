@@ -29,31 +29,36 @@ syscall = libc.syscall
 syscall.errcheck = errcheck  # type: ignore
 
 # FIXME mips uses different numbers here
+NR_SYS_pidfd_open = 434
 NR_SYS_pidfd_getfd = 438
 
 
 class PidFile:
-    def __init__(self, fd: int):
-        self.fd = fd
+    def __init__(self, pid_fd: int, proc_fd: int):
+        self.pid_fd = pid_fd
+        self.proc_fd = proc_fd
 
     def get_fd(self, targetfd: int, flags: int = 0, mode: str = "r") -> IO[Any]:
-        fd = syscall(NR_SYS_pidfd_getfd, self.fd, targetfd, flags)
+        fd = syscall(NR_SYS_pidfd_getfd, self.pid_fd, targetfd, flags)
         return os.fdopen(fd, mode)
 
     # this is less racy because of the pid file descriptor
     def fds(self) -> Iterator[os.DirEntry]:
-        with os.scandir(f"/proc/{os.getpid()}/fd/{self.fd}/fd") as it:
+        with os.scandir(f"/proc/{os.getpid()}/fd/{self.proc_fd}/fd") as it:
             for entry in it:
                 yield entry
 
 
 @contextmanager
 def openpid(pid: int) -> Generator[PidFile, None, None]:
-    fd = os.open(f"/proc/{pid}", os.O_PATH)
+    proc_fd = os.open(f"/proc/{pid}", os.O_PATH)
     try:
-        yield PidFile(fd)
+        pid_fd = syscall(NR_SYS_pidfd_open, pid, 0)
+        yield PidFile(pid_fd, proc_fd)
     finally:
-        os.close(fd)
+        os.close(proc_fd)
+        if pid_fd is not None:
+            os.close(pid_fd)
 
 
 def has_pidfd_getfd() -> bool:
