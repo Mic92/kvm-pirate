@@ -3,11 +3,10 @@
 import os
 import re
 import ctypes
-import fcntl
-from itertools import chain
-from typing import IO, Any, Optional, List, Dict
+from contextlib import contextmanager
+from typing import Any, Optional, List, Dict, Generator
 
-from . import pidfd
+from . import proc, inject_syscall
 
 
 GET_API_VERSION = 0xAE00
@@ -38,6 +37,16 @@ SET_CPUID2 = 0x4008AE90
 
 class GuestError(Exception):
     pass
+
+
+class UserspaceMemoryRegion(ctypes.Structure):
+    _fields_ = [
+        ("slot", ctypes.c_uint32),
+        ("flags", ctypes.c_uint32),
+        ("guest_phys_addr", ctypes.c_uint64),
+        ("memory_size", ctypes.c_uint64),
+        ("userspace_addr", ctypes.c_uint64),
+    ]
 
 
 class Segment(ctypes.Structure):
@@ -112,19 +121,16 @@ class Regs(ctypes.Structure):
     ]
 
 
-class Guest:
-    def __init__(self, vm_fd: IO[Any], vcpu_fds: List[IO[Any]]) -> None:
-        self.vm_fd = vm_fd
-        self.vcpus_fds = vcpu_fds
+class Tracee:
+    def __init__(self, hypervisor: "Hypervisor", proc: inject_syscall.Process) -> None:
+        self.hypervisor = hypervisor
+        self.proc = proc
 
-    def cpu_count(self) -> int:
-        return len(self.vcpus_fds)
-
-    def _vm_ioctl(self, request: int, arg: int = 0) -> None:
-        fcntl.ioctl(self.vm_fd.fileno(), request, arg)
+    def _vm_ioctl(self, request: int, arg: Any = 0) -> None:
+        self.proc.ioctl(self.hypervisor.vm_fd, request, arg)
 
     def _cpu_ioctl(self, cpu: int, request: int, arg: Any = 0) -> None:
-        fcntl.ioctl(self.vcpus_fds[cpu].fileno(), request, arg)
+        self.proc.ioctl(self.hypervisor.vcpu_fds[cpu], request, arg)
 
     def get_regs(self, cpu: int) -> Regs:
         regs = Regs()
@@ -132,7 +138,13 @@ class Guest:
             self._cpu_ioctl(cpu, GET_REGS, regs)
             return regs
         except OSError as err:
-            raise GuestError("Failed to get special registers") from err
+            raise GuestError("Failed to get registers") from err
+
+    def set_user_memory_region(self, region: UserspaceMemoryRegion) -> None:
+        try:
+            self._vm_ioctl(SET_USER_MEMORY_REGION, region)
+        except OSError as err:
+            raise GuestError("Failed to set user memory region") from err
 
     def get_sregs(self, cpu: int) -> Sregs:
         sregs = Sregs()
@@ -142,17 +154,32 @@ class Guest:
         except OSError as err:
             raise GuestError("Failed to get special registers") from err
 
-    def exit(self):
-        self.vm_fd.close()
-        for fd in self.cpu_fds:
-            fd.close()
+
+# TODO multiple vms
+class Hypervisor:
+    def __init__(self, pid: int, vm_fd: int, vcpu_fds: List[int]) -> None:
+        self.pid = pid
+        self.vm_fd = vm_fd
+        self.vcpu_fds = vcpu_fds
+
+    @contextmanager
+    def attach(self) -> Generator[Tracee, None, None]:
+        with inject_syscall.attach(self.pid) as process:
+            yield Tracee(self, process)
+
+    def cpu_count(self) -> int:
+        return len(self.vcpu_fds)
+
+    def exit(self) -> None:
+        os.close(self.vm_fd)
+        for fd in self.vcpu_fds:
+            os.close(fd)
 
 
 def _find_vm_fd(
-    entry: os.DirEntry,
-    pid_fd: pidfd.PidFile,
-    vm_fds: List[IO[Any]],
-    vcpu_fds: Dict[int, IO[Any]],
+    entry: os.DirEntry[str],
+    vm_fds: List[int],
+    vcpu_fds: Dict[int, int],
 ) -> None:
     fd_num = int(os.path.basename(entry.path))
     try:
@@ -161,37 +188,31 @@ def _find_vm_fd(
         # file may be closed again or not backed by file
         return
     if target == "anon_inode:kvm-vm":
-        vm_fds.append(pid_fd.get_fd(fd_num))
+        vm_fds.append(fd_num)
         return
     match = re.match(r"anon_inode:kvm-vcpu:(\d+)", target)
     if match:
         idx = int(match.group(1))
         if vcpu_fds.get(idx) is not None:
-            for fd in chain(vcpu_fds.values(), vm_fds):
-                fd.close()
             raise GuestError(
                 "Found multiple vcpus with same id in process {pid}."
                 + " Assume multiple VMs. This is not supported yet."
             )
-        vcpu_fds[idx] = pid_fd.get_fd(fd_num)
+        vcpu_fds[idx] = fd_num
 
 
-def find_vm(pid: int) -> Optional[Guest]:
-    vm_fds: List[IO[Any]] = []
-    vcpu_fds: Dict[int, IO[Any]] = {}
-    with pidfd.openpid(pid) as pid_fd:
+def find_vm(pid: int) -> Optional[Hypervisor]:
+    vm_fds: List[int] = []
+    vcpu_fds: Dict[int, int] = {}
+    with proc.openpid(pid) as pid_fd:
         for entry in pid_fd.fds():
-            _find_vm_fd(entry, pid_fd, vm_fds, vcpu_fds)
+            _find_vm_fd(entry, vm_fds, vcpu_fds)
     if len(vm_fds) == 0:
         return None
     if len(vm_fds) > 1:
-        for fd in chain(vcpu_fds.values(), vm_fds):
-            fd.close()
         raise GuestError(
             "Found multiple vms in process {pid}." + " This is not supported yet."
         )
     if len(vcpu_fds) == 0:
-        raise GuestError(
-            "Found KVM instance with no vcpu in process {pid}."
-        )
-    return Guest(vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()))
+        raise GuestError("Found KVM instance with no vcpu in process {pid}.")
+    return Hypervisor(pid=pid, vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()))

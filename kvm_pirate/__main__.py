@@ -3,10 +3,11 @@
 import sys
 
 from .kvm import find_vm, GuestError
-from .pidfd import has_pidfd_getfd
+from .kvm_memslots import get_memlots
+from typing import NoReturn
 
 
-def die(msg: str):
+def die(msg: str) -> NoReturn:
     print(msg, file=sys.stderr)
     sys.exit(1)
 
@@ -14,9 +15,6 @@ def die(msg: str):
 def main() -> None:
     if len(sys.argv) < 2:
         die(f"USAGE: {sys.argv[0]} pid")
-    if not has_pidfd_getfd():
-        die("pidfd_getfd syscall is not supported. "
-            "Please upgrade to your kernel to at least 5.6.")
     try:
         pid = int(sys.argv[1])
     except ValueError as e:
@@ -27,6 +25,8 @@ def main() -> None:
         die(f"Cannot access VM: {err}")
     if vm is None:
         die(f"No kvm instance found for pid {pid}")
+    slots = get_memlots(vm)
+    print(slots)
 
 
 if __name__ == "__main__":
