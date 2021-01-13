@@ -1,5 +1,5 @@
 from bcc import BPF
-from typing import List
+from typing import List, Any
 
 from . import kvm
 
@@ -61,8 +61,7 @@ def get_memlots(hv: kvm.Hypervisor) -> List[MemorySlot]:
     b = bpf_prog(hv.pid)
     memory_slots: List[MemorySlot] = []
 
-    def print_event(cpu: int, data, size):
-        breakpoint()
+    def print_event(cpu: int, data: Any, size: int) -> None:
         event = b["events"].event(data)
         memory_slots = event[0]
 

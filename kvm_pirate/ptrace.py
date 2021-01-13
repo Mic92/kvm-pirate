@@ -23,7 +23,7 @@ PTRACE_O_TRACESYSGOOD = 0x00000001
 def request(request: int, pid: int, addr: int, data: Any) -> int:
     res = libc.ptrace(request, pid, addr, data)
     assert res != 1
-    return res
+    return int(res)
 
 
 def peektext(pid: int, ip: int) -> int:

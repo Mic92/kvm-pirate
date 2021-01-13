@@ -4,7 +4,7 @@ from os import uname
 import sys
 from sys import byteorder
 from ctypes import sizeof, c_void_p, Structure, c_ushort, c_ulong, pointer
-from typing import List, Tuple, Union, Type, Any
+from typing import List, Tuple, Union, Type, Any, cast
 
 CPU_BIGENDIAN = byteorder == "big"
 CPU_64BITS = sizeof(c_void_p) == 8
@@ -255,11 +255,11 @@ class user_regs_struct(Structure):
         return regs
 
     def syscall_result(self) -> int:
-        return getattr(self, SYSCALL_RET)
+        return int(getattr(self, SYSCALL_RET))
 
     @property
     def sp(self) -> int:
-        return getattr(self, CPU_STACK_POINTER)
+        return int(getattr(self, CPU_STACK_POINTER))
 
     @sp.setter
     def sp(self, value: int) -> None:
@@ -267,7 +267,7 @@ class user_regs_struct(Structure):
 
     @property
     def ip(self) -> int:
-        return getattr(self, CPU_INSTR_POINTER)
+        return int(getattr(self, CPU_INSTR_POINTER))
 
     @ip.setter
     def ip(self, value: int) -> None:
@@ -276,7 +276,7 @@ class user_regs_struct(Structure):
     @property
     def fp(self) -> int:
         assert CPU_FRAME_POINTER is not None
-        return getattr(self, CPU_FRAME_POINTER)
+        return int(getattr(self, CPU_FRAME_POINTER))
 
     @fp.setter
     def fp(self, value: int) -> None:
