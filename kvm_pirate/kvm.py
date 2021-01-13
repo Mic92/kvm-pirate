@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 
+import ctypes
 import os
 import re
-import ctypes
 from contextlib import contextmanager
-from typing import Any, Optional, List, Dict, Generator
+from typing import Any, Dict, Generator, List, Optional
 
-from . import proc, inject_syscall
-
+from . import inject_syscall, proc
 
 GET_API_VERSION = 0xAE00
 CREATE_VM = 0xAE01

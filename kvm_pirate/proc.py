@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import os
-from typing import Iterator, Generator
 from contextlib import contextmanager
+from typing import Generator, Iterator
 
 
 class Pid:

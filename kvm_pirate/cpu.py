@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
-from os import uname
 import sys
+from ctypes import Structure, c_ulong, c_ushort, c_void_p, pointer, sizeof
+from os import uname
 from sys import byteorder
-from ctypes import sizeof, c_void_p, Structure, c_ushort, c_ulong, pointer
-from typing import List, Tuple, Union, Type, Any
+from typing import Any, List, Tuple, Type, Union
 
 CPU_BIGENDIAN = byteorder == "big"
 CPU_64BITS = sizeof(c_void_p) == 8

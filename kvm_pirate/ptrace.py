@@ -1,7 +1,8 @@
-from typing import Any
-from .libc import libc
 import ctypes
+from typing import Any
+
 from .cpu import user_regs_struct
+from .libc import libc
 
 PTRACE_TRACEME = 0
 

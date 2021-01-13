@@ -1,5 +1,6 @@
+from typing import Any, List
+
 from bcc import BPF
-from typing import List, Any
 
 from . import kvm
 
@@ -71,9 +72,7 @@ def get_memlots(hv: kvm.Hypervisor) -> List[MemorySlot]:
             region = kvm.UserspaceMemoryRegion()
             tracee.set_user_memory_region(region)
         except kvm.GuestError as e:
-            breakpoint()
             print(e)
-    breakpoint()
     b.perf_buffer_poll()
     return memory_slots
 

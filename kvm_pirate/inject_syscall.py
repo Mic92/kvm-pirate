@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-from . import ptrace, cpu
 import os
 import signal
-from typing import Generator
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Generator
 
+from . import cpu, ptrace
 from .syscalls import SYSCALL_TEXT
 
 
