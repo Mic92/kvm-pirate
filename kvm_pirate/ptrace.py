@@ -69,6 +69,4 @@ def detach(pid: int) -> None:
 
 
 def traceexit(pid: int) -> None:
-    request(
-        PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACEEXIT
-    )
+    request(PTRACE_SETOPTIONS, pid, 0, PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACEEXIT)

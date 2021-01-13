@@ -21,17 +21,20 @@ def compile_executable(lines: List[str], target: str) -> None:
 def test_syscall_inject(helpers: conftest.Helpers) -> None:
     with tempfile.TemporaryDirectory() as d:
         binary = os.path.join(d, "main")
-        compile_executable([
-            "#include <unistd.h>",
-            "#include <stdio.h>",
-            "int main() { "
-            "  int a; a = read(0, &a, sizeof(a));",
-            "  puts(\"OK\");"
-            "  return 0;",
-            "}"
-        ], binary)
+        compile_executable(
+            [
+                "#include <unistd.h>",
+                "#include <stdio.h>",
+                "int main() { " "  int a; a = read(0, &a, sizeof(a));",
+                '  puts("OK");' "  return 0;",
+                "}",
+            ],
+            binary,
+        )
         pipefds = os.pipe()
-        proc = subprocess.Popen([binary], stdin=pipefds[0], stdout=subprocess.PIPE, text=True)
+        proc = subprocess.Popen(
+            [binary], stdin=pipefds[0], stdout=subprocess.PIPE, text=True
+        )
         os.close(pipefds[0])
         with attach(proc.pid) as ctx:
             res = ctx.syscall(SYSCALL_NAMES["getpid"])

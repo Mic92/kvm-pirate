@@ -35,7 +35,8 @@ def main() -> None:
                         f.write(
                             """# GENERERATED by generate_syscalls.py
 SYSCALL_NAMES = {
-""")
+"""
+                        )
                         content = tar.extractfile(name)
                         assert content is not None
                         for line in content.read().decode("utf-8").split("\n"):

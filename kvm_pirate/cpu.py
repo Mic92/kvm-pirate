@@ -170,11 +170,14 @@ elif CPU_PPC64:
 elif CPU_ARM32:
     registers = list(("r%i" % reg, c_ulong) for reg in range(18))
 elif CPU_AARCH64:
-    registers = list([*[("r%i" % reg, c_ulong) for reg in range(31)],
-                     ('sp', c_ulong),
-                     ('pc', c_ulong),
-                     ('pstate', c_ulong)]
-                     )
+    registers = list(
+        [
+            *[("r%i" % reg, c_ulong) for reg in range(31)],
+            ("sp", c_ulong),
+            ("pc", c_ulong),
+            ("pstate", c_ulong),
+        ]
+    )
 elif CPU_64BITS:
     registers = [
         ("r15", c_ulong),
@@ -203,7 +206,7 @@ elif CPU_64BITS:
         ("ds", c_ulong),
         ("es", c_ulong),
         ("fs", c_ulong),
-        ("gs", c_ulong)
+        ("gs", c_ulong),
     ]
 else:
     registers = [

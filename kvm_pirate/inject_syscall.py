@@ -44,7 +44,9 @@ class Process:
             raise ExitError(f"process exited with: {exit_code}")
         elif os.WIFSIGNALED(status):
             sigcode = os.WTERMSIG(status)
-            raise ExitError(f"process stopped by signal: {sigcode} ({signal.strsignal(sigcode)})")
+            raise ExitError(
+                f"process stopped by signal: {sigcode} ({signal.strsignal(sigcode)})"
+            )
         else:
             raise SyscallError("failed to invoke syscall")
 

@@ -41,11 +41,11 @@ class GuestError(Exception):
 
 class UserspaceMemoryRegion(ctypes.Structure):
     _fields_ = [
-        ('slot', ctypes.c_uint32),
-        ('flags', ctypes.c_uint32),
-        ('guest_phys_addr', ctypes.c_uint64),
-        ('memory_size', ctypes.c_uint64),
-        ('userspace_addr', ctypes.c_uint64),
+        ("slot", ctypes.c_uint32),
+        ("flags", ctypes.c_uint32),
+        ("guest_phys_addr", ctypes.c_uint64),
+        ("memory_size", ctypes.c_uint64),
+        ("userspace_addr", ctypes.c_uint64),
     ]
 
 
@@ -214,7 +214,5 @@ def find_vm(pid: int) -> Optional[Hypervisor]:
             "Found multiple vms in process {pid}." + " This is not supported yet."
         )
     if len(vcpu_fds) == 0:
-        raise GuestError(
-            "Found KVM instance with no vcpu in process {pid}."
-        )
+        raise GuestError("Found KVM instance with no vcpu in process {pid}.")
     return Hypervisor(pid=pid, vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()))

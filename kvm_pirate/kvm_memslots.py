@@ -52,8 +52,7 @@ class MemorySlot:
 
 
 def bpf_prog(pid: int) -> BPF:
-    return BPF(text=bpf_text,
-               cflags=[f"-DTARGET_PID={pid}"])
+    return BPF(text=bpf_text, cflags=[f"-DTARGET_PID={pid}"])
 
 
 def get_memlots(hv: kvm.Hypervisor) -> List[MemorySlot]:
