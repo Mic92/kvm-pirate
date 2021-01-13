@@ -44,8 +44,8 @@ SYSCALL_NAMES = {
                             if len(syscall_spec) < 2:
                                 continue
                             syscall, num = syscall_spec
-                            f.write(f'   "{syscall}": {num},\n')
-                        f.write("}")
+                            f.write(f'    "{syscall}": {num},\n')
+                        f.write("}\n")
             finally:
                 tar.close()
 

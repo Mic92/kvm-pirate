@@ -40,6 +40,7 @@ SYSCALL_NAMES = {
     "epoll_ctl": 233,
     "epoll_ctl_old": 214,
     "epoll_pwait": 281,
+    "epoll_pwait2": 441,
     "epoll_wait": 232,
     "epoll_wait_old": 215,
     "eventfd": 284,
