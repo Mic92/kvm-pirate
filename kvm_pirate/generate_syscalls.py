@@ -13,6 +13,7 @@ ROOT = Path(__file__).parent.resolve()
 # don't generate all for now
 whitelist = set(["powerpc", "arm", "arm64", "x86_64", "i386"])
 
+
 # From https://github.com/hrw/syscalls-table/
 def main() -> None:
     URL = "https://github.com/hrw/syscalls-table/archive/master.tar.gz"

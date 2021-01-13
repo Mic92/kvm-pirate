@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Any
 from .libc import libc
 import ctypes
 from .cpu import user_regs_struct

@@ -23,6 +23,6 @@ elif cpu.CPU_X86_64:
     SYSCALL_TEXT = 0x050F
 elif cpu.CPU_I386:
     # $ rasm2  -a x86 -b 32 'int 80'
-    from .i386 import SYSCALL_NAMES
+    from .i386 import SYSCALL_NAMES  # noqa: F401
 
     SYSCALL_TEXT = 0x50CD

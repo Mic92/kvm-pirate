@@ -26,6 +26,7 @@ def main() -> None:
     if vm is None:
         die(f"No kvm instance found for pid {pid}")
     slots = get_memlots(vm)
+    print(slots)
 
 
 if __name__ == "__main__":

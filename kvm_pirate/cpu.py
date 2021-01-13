@@ -4,7 +4,7 @@ from os import uname
 import sys
 from sys import byteorder
 from ctypes import sizeof, c_void_p, Structure, c_ushort, c_ulong, pointer
-from typing import List, Tuple, Union, Type, Any, cast
+from typing import List, Tuple, Union, Type, Any
 
 CPU_BIGENDIAN = byteorder == "big"
 CPU_64BITS = sizeof(c_void_p) == 8

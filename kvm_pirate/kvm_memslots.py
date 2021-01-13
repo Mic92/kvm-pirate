@@ -63,6 +63,7 @@ def get_memlots(hv: kvm.Hypervisor) -> List[MemorySlot]:
     def print_event(cpu: int, data: Any, size: int) -> None:
         event = b["events"].event(data)
         memory_slots = event[0]
+        print(memory_slots)
 
     b["events"].open_perf_buffer(print_event)
     with hv.attach() as tracee:
