@@ -176,7 +176,7 @@ class Hypervisor:
 
 
 def _find_vm_fd(
-    entry: os.DirEntry[str],
+    entry: "os.DirEntry[str]",
     vm_fds: List[int],
     vcpu_fds: Dict[int, int],
 ) -> None:

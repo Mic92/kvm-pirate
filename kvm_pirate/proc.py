@@ -10,7 +10,7 @@ class Pid:
         self.fd = fd
 
     # this is less racy because of the pid file descriptor
-    def fds(self) -> Iterator[os.DirEntry[str]]:
+    def fds(self) -> Iterator["os.DirEntry[str]"]:
         with os.scandir(f"/proc/{os.getpid()}/fd/{self.fd}/fd") as it:
             for entry in it:
                 yield entry
