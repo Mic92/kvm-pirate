@@ -26,9 +26,9 @@ class Process:
         regs = self.saved_regs.prepare_syscall(*args)
         ptrace.setregs(self.pid, regs)
         # FIXME: on arm we would need PTRACE_SET_SYSCALL
-        ptrace.singlestep(self.pid)
+        ptrace.syscall(self.pid)
         _, status = os.waitpid(self.pid, 0)
-        if os.WIFSTOPPED(status) and os.WTERMSIG(status) & ~0x80 == signal.SIGTRAP:
+        if os.WIFSTOPPED(status) and os.WEXITSTATUS(status) & ~0x80 == signal.SIGTRAP:
             ptrace.syscall(self.pid)
             _, status = os.waitpid(self.pid, 0)
 
@@ -56,6 +56,7 @@ class Process:
 @contextmanager
 def save_regs(pid: int) -> Generator[cpu.user_regs_struct, None, None]:
     old_regs = ptrace.getregs(pid)
+    assert old_regs.ip != 0
     try:
         yield old_regs
     finally:
@@ -73,11 +74,20 @@ def save_text(pid: int, ip: int) -> Generator[int, None, None]:
 
 @contextmanager
 def attach(pid: int) -> Generator[Process, None, None]:
-    ptrace.attach(pid)
+    threads = []
+
     try:
+        for thread in os.listdir(f"/proc/{pid}/task"):
+            tid = int(thread)
+            ptrace.attach(tid)
+            _, status = os.waitpid(tid, 0)
+            assert os.WIFSTOPPED(status), "Could attach to pid"
+            threads.append(tid)
+
         with save_regs(pid) as regs:
             with save_text(pid, regs.ip):
                 ptrace.poketext(pid, regs.ip, SYSCALL_TEXT)
                 yield Process(pid, regs)
     finally:
-        ptrace.detach(pid)
+        for tid in threads:
+            ptrace.detach(tid)
