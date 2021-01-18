@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from typing import Any, Generator
 
 from . import cpu, ptrace
-from .syscalls import SYSCALL_TEXT
+from .syscalls import SYSCALL_TEXT, SYSCALL_NAMES
 
 
 class SyscallError(OSError):
@@ -51,7 +51,7 @@ class Process:
             raise SyscallError("failed to invoke syscall")
 
     def ioctl(self, fd: int, request: int, arg: Any = 0) -> int:
-        return ctypes.c_int(self.syscall(fd, request, arg)).value
+        return ctypes.c_int(self.syscall(SYSCALL_NAMES["ioctl"], fd, request, arg)).value
 
 
 @contextmanager
