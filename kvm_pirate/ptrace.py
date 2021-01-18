@@ -12,8 +12,8 @@ PTRACE_SINGLESTEP = 9
 PTRACE_GETREGS = 12
 PTRACE_SETREGS = 13
 PTRACE_SYSCALL = 24
-
 PTRACE_SETOPTIONS = 16896
+
 PTRACE_CONT = 7
 PTRACE_ATTACH = 16
 PTRACE_DETACH = 17
@@ -23,7 +23,6 @@ PTRACE_O_TRACESYSGOOD = 0x00000001
 
 def request(request: int, pid: int, addr: int, data: Any) -> int:
     res = libc.ptrace(request, pid, addr, data)
-    assert res != 1
     return int(res)
 
 
