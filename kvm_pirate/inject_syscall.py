@@ -2,6 +2,7 @@
 
 import os
 import signal
+import ctypes
 from contextlib import contextmanager
 from typing import Any, Generator
 
@@ -50,7 +51,7 @@ class Process:
             raise SyscallError("failed to invoke syscall")
 
     def ioctl(self, fd: int, request: int, arg: Any = 0) -> int:
-        return self.syscall(fd, request, arg)
+        return ctypes.c_int(self.syscall(fd, request, arg)).value
 
 
 @contextmanager
