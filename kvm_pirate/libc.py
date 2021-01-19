@@ -9,10 +9,9 @@ libc = ctypes.CDLL(None, use_errno=True)
 def errcheck(
     ret: "ctypes._CData", func: "ctypes._FuncPointer", args: Tuple["ctypes._CData", ...]
 ) -> "ctypes._CData":
-    err = ctypes.get_errno()
-    if err == 0:
-        return ret
-    raise OSError(err)
+    if ret == -1:
+        raise OSError(ctypes.get_errno())
+    return ret
 
 
 libc.ptrace.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
