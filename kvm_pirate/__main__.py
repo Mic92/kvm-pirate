@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 
 import sys
-
-from .kvm import find_vm, GuestError
-from .kvm_memslots import get_memlots
 from typing import NoReturn
+
+from .kvm import GuestError, find_vm
+from .kvm_memslots import get_memlots
 
 
 def die(msg: str) -> NoReturn:

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 
+import ctypes
 import os
 import re
-import ctypes
 from contextlib import contextmanager
-from typing import Any, Optional, List, Dict, Generator
+from typing import Any, Dict, Generator, List, Optional
 
-from . import proc, inject_syscall
-
+from . import inject_syscall, proc
 
 GET_API_VERSION = 0xAE00
 CREATE_VM = 0xAE01
 SET_USER_MEMORY_REGION = 0x4020AE46
+CHECK_EXTENSION = 0xAE03
 CREATE_VCPU = 0xAE41
 GET_SREGS = 0x8138AE83
 SET_SREGS = 0x4138AE84
@@ -126,11 +126,11 @@ class Tracee:
         self.hypervisor = hypervisor
         self.proc = proc
 
-    def _vm_ioctl(self, request: int, arg: Any = 0) -> None:
-        self.proc.ioctl(self.hypervisor.vm_fd, request, arg)
+    def _vm_ioctl(self, request: int, arg: Any = 0) -> int:
+        return self.proc.ioctl(self.hypervisor.vm_fd, request, arg)
 
-    def _cpu_ioctl(self, cpu: int, request: int, arg: Any = 0) -> None:
-        self.proc.ioctl(self.hypervisor.vcpu_fds[cpu], request, arg)
+    def _cpu_ioctl(self, cpu: int, request: int, arg: Any = 0) -> int:
+        return self.proc.ioctl(self.hypervisor.vcpu_fds[cpu], request, arg)
 
     def get_regs(self, cpu: int) -> Regs:
         regs = Regs()
@@ -140,9 +140,17 @@ class Tracee:
         except OSError as err:
             raise GuestError("Failed to get registers") from err
 
+    def check_extension(self, cap: int) -> int:
+        try:
+            return self._vm_ioctl(CHECK_EXTENSION, cap)
+        except OSError as err:
+            raise GuestError("Failed to check extension") from err
+
+    # XXX UserspaceMemoryRegion must be in tracee memory
     def set_user_memory_region(self, region: UserspaceMemoryRegion) -> None:
         try:
-            self._vm_ioctl(SET_USER_MEMORY_REGION, region)
+            ptr = ctypes.cast(ctypes.byref(region), ctypes.c_void_p).value
+            self._vm_ioctl(SET_USER_MEMORY_REGION, ptr)
         except OSError as err:
             raise GuestError("Failed to set user memory region") from err
 
@@ -177,7 +185,7 @@ class Hypervisor:
 
 
 def _find_vm_fd(
-    entry: os.DirEntry[str],
+    entry: "os.DirEntry[str]",
     vm_fds: List[int],
     vcpu_fds: Dict[int, int],
 ) -> None:

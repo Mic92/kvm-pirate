@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-import urllib.request
-import tarfile
-from tempfile import TemporaryDirectory
 import shutil
+import tarfile
+import urllib.request
 from pathlib import Path
-
+from tempfile import TemporaryDirectory
 
 ROOT = Path(__file__).parent.resolve()
 
