@@ -35,7 +35,7 @@ class Process:
 
         if os.WIFSTOPPED(status):
             result = ptrace.getregs(self.pid)
-            assert self.saved_regs.ip == result.ip - 2
+            assert self.saved_regs.ip == result.ip - 2, f"{self.saved_regs.ip} != {result.ip - 2}"
             ptrace.setregs(self.pid, self.saved_regs)
             return result.syscall_result()
 
