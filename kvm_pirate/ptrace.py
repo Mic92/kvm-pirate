@@ -44,6 +44,10 @@ def setregs(pid: int, regs: user_regs_struct) -> None:
     request(PTRACE_SETREGS, pid, 0, ctypes.byref(regs))
 
 
+def setoptions(pid: int, options: int) -> None:
+    request(PTRACE_SETOPTIONS, pid, 0, options)
+
+
 def syscall(pid: int) -> None:
     request(PTRACE_SYSCALL, pid, 0, 0)
 
