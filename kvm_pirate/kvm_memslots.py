@@ -60,16 +60,16 @@ void kvm_vm_ioctl(struct pt_regs *ctx, struct file *filp) {
 
 class Memslot(ctypes.Structure):
     _fields_ = [
-        ('base_gfn', ctypes.c_uint64),
-        ('npages', ctypes.c_ulong),
-        ('userspace_addr', ctypes.c_ulong),
+        ("base_gfn", ctypes.c_uint64),
+        ("npages", ctypes.c_ulong),
+        ("userspace_addr", ctypes.c_ulong),
     ]
 
 
 class EventHeader(ctypes.Structure):
     _fields_ = [
-        ('address_space_num', ctypes.c_size_t),
-        ('mem_slots_num', ctypes.c_size_t)
+        ("address_space_num", ctypes.c_size_t),
+        ("mem_slots_num", ctypes.c_size_t),
     ]
 
 
@@ -79,9 +79,10 @@ def event_structure(header: EventHeader) -> Type[ctypes.Structure]:
 
     class Event(ctypes.Structure):
         _fields_ = [
-            ('header', EventHeader),
-            ('memslots', Memslot * header.address_space_num * header.mem_slots_num),
+            ("header", EventHeader),
+            ("memslots", Memslot * header.address_space_num * header.mem_slots_num),
         ]
+
     return Event
 
 
@@ -107,9 +108,10 @@ def get_memlots(hv: kvm.Hypervisor) -> List[MemorySlot]:
         event_cls = event_structure(header)
         event = ctypes.cast(data, ctypes.POINTER(event_cls)).contents
         memslots.append(event.memslots)
+
     try:
         with hv.attach() as tracee:
-            bpf.attach_kprobe(event='kvm_vm_ioctl', fn_name='kvm_vm_ioctl')
+            bpf.attach_kprobe(event="kvm_vm_ioctl", fn_name="kvm_vm_ioctl")
             bpf["memslots"].open_perf_buffer(get_memslot)
             try:
                 tracee.check_extension(0)

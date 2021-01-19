@@ -35,7 +35,9 @@ class Process:
 
         if os.WIFSTOPPED(status):
             result = ptrace.getregs(self.pid)
-            assert self.saved_regs.ip == result.ip - 2, f"{self.saved_regs.ip} != {result.ip - 2}"
+            assert (
+                self.saved_regs.ip == result.ip - 2
+            ), f"{self.saved_regs.ip} != {result.ip - 2}"
             ptrace.setregs(self.pid, self.saved_regs)
             return result.syscall_result()
 
@@ -51,7 +53,9 @@ class Process:
             raise SyscallError("failed to invoke syscall")
 
     def ioctl(self, fd: int, request: int, arg: Any = 0) -> int:
-        return ctypes.c_int(self.syscall(SYSCALL_NAMES["ioctl"], fd, request, arg)).value
+        return ctypes.c_int(
+            self.syscall(SYSCALL_NAMES["ioctl"], fd, request, arg)
+        ).value
 
 
 @contextmanager
