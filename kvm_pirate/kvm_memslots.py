@@ -1,8 +1,6 @@
 from typing import Any, List
 import ctypes
 from typing import Type
-import time
-
 from bcc import BPF
 
 from . import kvm

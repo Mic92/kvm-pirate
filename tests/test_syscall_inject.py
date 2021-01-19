@@ -4,7 +4,6 @@ import subprocess
 import os
 import tempfile
 import signal
-from typing import List
 from kvm_pirate.inject_syscall import attach
 from kvm_pirate.syscalls import SYSCALL_NAMES
 

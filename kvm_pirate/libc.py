@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import ctypes
-from typing import Any, Type, Tuple
+from typing import Tuple
 
 libc = ctypes.CDLL(None, use_errno=True)
 
