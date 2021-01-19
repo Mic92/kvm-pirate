@@ -7,8 +7,8 @@ libc = ctypes.CDLL(None, use_errno=True)
 
 
 def errcheck(
-    ret: "ctypes._CData", func: "ctypes._FuncPointer", args: Tuple["ctypes._CData", ...]
-) -> "ctypes._CData":
+    ret: int, func: "ctypes._FuncPointer", args: Tuple["ctypes._CData", ...]
+) -> int:
     if ret == -1:
         raise OSError(ctypes.get_errno())
     return ret
