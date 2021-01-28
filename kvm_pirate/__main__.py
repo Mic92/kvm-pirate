@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import logging
 from typing import NoReturn
 
 from .kvm import GuestError, find_vm
@@ -15,6 +16,7 @@ def die(msg: str) -> NoReturn:
 def main() -> None:
     if len(sys.argv) < 2:
         die(f"USAGE: {sys.argv[0]} pid")
+    logging.basicConfig(level=logging.DEBUG)
     try:
         pid = int(sys.argv[1])
     except ValueError as e:
