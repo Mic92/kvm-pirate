@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
+import ctypes
 import os
 import signal
-import ctypes
 from contextlib import contextmanager
 from typing import Any, Generator
 
 from . import cpu, ptrace
-from .syscalls import SYSCALL_TEXT, SYSCALL_NAMES
+from .syscalls import SYSCALL_NAMES, SYSCALL_TEXT
 
 
 class SyscallError(OSError):
