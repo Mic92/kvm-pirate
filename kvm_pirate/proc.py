@@ -36,6 +36,12 @@ class Mapping:
         )
 
 
+@dataclass
+class KvmMapping(Mapping):
+    physical_start: int
+    hv_mapping: Mapping
+
+
 class Pid:
     def __init__(self, fd: int):
         self.fd = fd

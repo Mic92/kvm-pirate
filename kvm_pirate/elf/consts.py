@@ -17,9 +17,14 @@
 
 # e_ident[] indices
 EI_MAG0 = 0  # File identification
+ELFMAG0 = 0x7F
 EI_MAG1 = 1  # File identification
+ELFMAG1 = ord("E")
 EI_MAG2 = 2  # File identification
+ELFMAG2 = ord("L")
 EI_MAG3 = 3  # File identification
+ELFMAG3 = ord("F")
+
 EI_CLASS = 4  # File class
 EI_DATA = 5  # Data encoding
 EI_VERSION = 6  # File version

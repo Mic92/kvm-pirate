@@ -7,6 +7,8 @@ from contextlib import contextmanager
 from typing import Any, Dict, Generator, List, Optional
 
 from . import inject_syscall, proc
+from .kvm_memslots import get_maps
+from .proc import Mapping
 
 GET_API_VERSION = 0xAE00
 CREATE_VM = 0xAE01
@@ -165,10 +167,13 @@ class Tracee:
 
 # TODO multiple vms
 class Hypervisor:
-    def __init__(self, pid: int, vm_fd: int, vcpu_fds: List[int]) -> None:
+    def __init__(
+        self, pid: int, vm_fd: int, vcpu_fds: List[int], mappings: List[Mapping]
+    ) -> None:
         self.pid = pid
         self.vm_fd = vm_fd
         self.vcpu_fds = vcpu_fds
+        self.mappings = mappings
 
     @contextmanager
     def attach(self) -> Generator[Tracee, None, None]:
@@ -177,6 +182,9 @@ class Hypervisor:
 
     def cpu_count(self) -> int:
         return len(self.vcpu_fds)
+
+    def get_maps(self) -> List[proc.KvmMapping]:
+        return get_maps(self)
 
     def exit(self) -> None:
         os.close(self.vm_fd)
@@ -209,12 +217,13 @@ def _find_vm_fd(
         vcpu_fds[idx] = fd_num
 
 
-def find_vm(pid: int) -> Optional[Hypervisor]:
+def get_hypervisor(pid: int) -> Optional[Hypervisor]:
     vm_fds: List[int] = []
     vcpu_fds: Dict[int, int] = {}
     with proc.openpid(pid) as pid_fd:
         for entry in pid_fd.fds():
             _find_vm_fd(entry, vm_fds, vcpu_fds)
+        mappings = pid_fd.maps()
     if len(vm_fds) == 0:
         return None
     if len(vm_fds) > 1:
@@ -223,4 +232,6 @@ def find_vm(pid: int) -> Optional[Hypervisor]:
         )
     if len(vcpu_fds) == 0:
         raise GuestError("Found KVM instance with no vcpu in process {pid}.")
-    return Hypervisor(pid=pid, vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()))
+    return Hypervisor(
+        pid=pid, vm_fd=vm_fds[0], vcpu_fds=list(vcpu_fds.values()), mappings=mappings
+    )

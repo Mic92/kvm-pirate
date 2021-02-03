@@ -18,3 +18,22 @@ libc.ptrace.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_vo
 libc.ptrace.restype = ctypes.c_long
 # don't know how to satisfy mypy here
 libc.ptrace.errcheck = errcheck  # type: ignore
+
+
+class iovec(ctypes.Structure):
+    _fields_ = [
+        ("iov_base", ctypes.c_void_p),
+        ("iov_len", ctypes.c_size_t),
+    ]
+
+
+libc.process_vm_readv.errcheck = errcheck  # type: ignore
+libc.process_vm_readv.argtypes = [
+    ctypes.c_int,
+    ctypes.POINTER(iovec),
+    ctypes.c_ulong,
+    ctypes.POINTER(iovec),
+    ctypes.c_ulong,
+    ctypes.c_ulong,
+]
+libc.ptrace.restype = ctypes.c_ssize_t

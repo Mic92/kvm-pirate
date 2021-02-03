@@ -1,13 +1,16 @@
-from typing import Any, List
 import ctypes
 import resource
-import logging
-from typing import Type
+from typing import Any, List, Type
+
 from bcc import BPF
 
-from . import kvm
+try:
+    # for mypy
+    from . import kvm
+except ImportError:
+    pass
 
-logger = logging.getLogger(__name__)
+from . import proc
 
 DEBUG = True
 
@@ -71,12 +74,25 @@ class MemSlot(ctypes.Structure):
         return int(self.userspace_addr)
 
     @property
+    def size(self) -> int:
+        return int(resource.getpagesize() * self.npages)
+
+    @property
     def end(self) -> int:
-        return int(self.start + resource.getpagesize() * self.npages)
+        return self.start + self.size
 
     @property
     def physical_start(self) -> int:
         return int(self.base_gfn * resource.getpagesize())
+
+    def __repr__(self) -> str:
+        return "%s(start=%#x, end=%#x, size=%#x, physical_start=%#x)" % (
+            self.__class__.__name__,
+            self.start,
+            self.end,
+            self.size,
+            self.physical_start,
+        )
 
 
 def event_structure(header: ctypes.c_size_t) -> Type[ctypes.Structure]:
@@ -96,7 +112,7 @@ def bpf_prog(pid: int) -> BPF:
     return BPF(text=bpf_text, cflags=[f"-DTARGET_PID={pid}"])
 
 
-def get_memlots(hv: kvm.Hypervisor) -> List[MemSlot]:
+def get_maps(hv: "kvm.Hypervisor") -> List[proc.KvmMapping]:
     # initialize BPF
 
     bpf = bpf_prog(hv.pid)
@@ -108,29 +124,39 @@ def get_memlots(hv: kvm.Hypervisor) -> List[MemSlot]:
         event_cls = event_structure(header)
         event = ctypes.cast(data, ctypes.POINTER(event_cls)).contents
         memslots.clear()
-        memslots.extend(event.memslots)
+        for memslot in event.memslots:
+            # we don't own the data here
+            copy = MemSlot()
+            ctypes.pointer(copy)[0] = memslot
+            memslots.append(copy)
 
     try:
         with hv.attach() as tracee:
             bpf.attach_kprobe(event="kvm_vm_ioctl", fn_name="kvm_vm_ioctl")
             bpf["memslots"].open_perf_buffer(get_memslot)
-            try:
-                tracee.check_extension(0)
-            except kvm.GuestError as e:
-                print(e)
+            tracee.check_extension(0)
         bpf.perf_buffer_poll()
     finally:
         # close perf reader
         del bpf
     assert len(memslots) > 0
-    for slot in memslots:
-        if slot.base_gfn == 0 and slot.npages == 0 and slot.userspace_addr == 0:
-            continue
-        logger.info(
-            f"vm mem: 0x{slot.start:x} -> 0x{slot.end:x} (physical 0x{slot.physical_start:x})"
-        )
 
-    return memslots
+    maps = []
+    for memslot in memslots:
+        mapping = proc.find_mapping(hv.mappings, memslot.start)
+        assert mapping is not None
+        attrs = mapping.__dict__
+        attrs.update(
+            physical_start=memslot.physical_start,
+            start=mapping.start,
+            stop=memslot.end,
+            hv_mapping=mapping,
+        )
+        kvm_mapping = proc.KvmMapping(**attrs)
+        assert kvm_mapping.start >= mapping.start
+        assert kvm_mapping.stop <= mapping.stop
+        maps.append(kvm_mapping)
+    return maps
 
 
 if __name__ == "__main__":
