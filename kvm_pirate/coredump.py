@@ -86,5 +86,5 @@ def write_corefile(pid: int, core_file: IO[bytes], slots: List[KvmMapping]) -> N
 def generate_coredump(pid: int, maps: List[KvmMapping]) -> None:
     with open(f"/proc/{pid}/maps", "r") as f:
         print(f.read())
-    with open(f"core.{pid}", "rb+") as core_file:
+    with open(f"core.{pid}", "wb+") as core_file:
         write_corefile(pid, core_file, maps)
