@@ -87,7 +87,5 @@ def write_corefile(pid: int, core_file: IO[bytes], slots: List[KvmMapping]) -> N
 # This is not a memory-consitant snapshot because the VM still runs while copying the memory!
 # However we are interested in where the kernel text is for now.
 def generate_coredump(pid: int, maps: List[KvmMapping]) -> None:
-    with open(f"/proc/{pid}/maps", "r") as f:
-        print(f.read())
     with open(f"core.{pid}", "wb+") as core_file:
         write_corefile(pid, core_file, maps)
