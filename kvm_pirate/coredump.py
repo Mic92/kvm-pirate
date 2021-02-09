@@ -42,7 +42,7 @@ def write_corefile(pid: int, core_file: IO[bytes], slots: List[KvmMapping]) -> N
     offset = page_align(ctypes.sizeof(Ehdr) + ctypes.sizeof(section_headers))
     core_size = offset
     for ph, slot in zip(section_headers, slots):
-        #print(f"slot {slot.physical_start:x}: {slot.start:x}-{slot.stop:x}")
+        # print(f"slot {slot.physical_start:x}: {slot.start:x}-{slot.stop:x}")
         ph.p_type = PT_LOAD
         # FIXME, we could get this from /proc/<pid>/maps if we want
         ph.p_flags = 0
