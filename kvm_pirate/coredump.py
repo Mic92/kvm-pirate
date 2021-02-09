@@ -78,6 +78,9 @@ def write_corefile(pid: int, core_file: IO[bytes], slots: List[KvmMapping]) -> N
             iov.iov_len = slot.size
         libc.process_vm_readv(pid, dst_iovec, 1, src_iovecs, len(src_iovecs), 0)
     finally:
+        # gc references to buf so we can close it
+        del ptr
+        del c_void
         buf.close()
 
 
